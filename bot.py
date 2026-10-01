@@ -1,8 +1,19 @@
 # pip install python-telegram-bot==21.6
 import os
-from telegram import InlineKeyboardButton as Btn, InlineKeyboardMarkup, Update
-from telegram.error import BadRequest
-from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
+from telegram import (
+    InlineKeyboardButton as Btn,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    Update,
+)
+from telegram.ext import (
+    Application,
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 TOKEN = os.environ.get("BOT_TOKEN", "BOTFATHER_TOKEN_HERE")
 
@@ -16,12 +27,14 @@ MAP_LINK = "https://maps.app.goo.gl/txw6yBjew3kBzY137?g_st=ac"
 LAT = 29.32324
 LON = 47.93314
 
+# د دکمو ترتیب په "btn" لیست کې:
+ACTIONS = ["products", "hours", "contact", "location", "language", "about"]
+
 LANGS = {
     "ps": {
         "name": "پښتو",
-        "welcome": "ښه راغلاست! القريشي فودز ته 🌿\nیوه برخه وټاکئ:",
+        "welcome": "ښه راغلاست! القريشي فودز ته 🌿\nله لاندې مینو یوه برخه وټاکئ.",
         "btn": ["📦 محصولات", "🕙 د کار وخت", "📞 اړیکه", "📍 موقعیت", "🌐 ژبه", "ℹ️ زموږ په اړه"],
-        "back": "🔙 اصلي مینو",
         "products": "📦 زموږ محصولات:\n• مصالحې\n• بوټي (اعشاب)\n• وچې میوې (مکسرات)\n• قهوه\n• کجورې",
         "hours": "🕙 د کار وخت:\nله ۱۰ سهار تر ۱۰ شپې",
         "contact": "📞 اړیکه:",
@@ -30,9 +43,8 @@ LANGS = {
     },
     "fa": {
         "name": "دری",
-        "welcome": "خوش آمدید به القریشی فودز 🌿\nیک بخش را انتخاب کنید:",
+        "welcome": "خوش آمدید به القریشی فودز 🌿\nاز منوی پایین یک بخش را انتخاب کنید.",
         "btn": ["📦 محصولات", "🕙 ساعات کار", "📞 تماس", "📍 موقعیت", "🌐 زبان", "ℹ️ درباره ما"],
-        "back": "🔙 منوی اصلی",
         "products": "📦 محصولات ما:\n• ادویه‌جات\n• گیاهان (اعشاب)\n• میوه‌های خشک و مغزها\n• قهوه\n• خرما",
         "hours": "🕙 ساعات کار:\nاز ساعت ۱۰ صبح تا ۱۰ شب",
         "contact": "📞 تماس:",
@@ -41,9 +53,8 @@ LANGS = {
     },
     "ar": {
         "name": "العربية",
-        "welcome": "أهلاً بكم في القريشي فودز 🌿\nاختر قسماً:",
+        "welcome": "أهلاً بكم في القريشي فودز 🌿\nاختر قسماً من القائمة بالأسفل.",
         "btn": ["📦 منتجاتنا", "🕙 مواعيد العمل", "📞 تواصل معنا", "📍 الموقع", "🌐 اللغة", "ℹ️ من نحن"],
-        "back": "🔙 القائمة الرئيسية",
         "products": "📦 منتجاتنا:\n• البهارات\n• الأعشاب\n• المكسرات الفاخرة\n• القهوة\n• التمور",
         "hours": "🕙 مواعيد العمل:\nمن ١٠ صباحاً وحتى ١٠ مساءً",
         "contact": "📞 تواصل معنا:",
@@ -52,9 +63,8 @@ LANGS = {
     },
     "hi": {
         "name": "हिन्दी",
-        "welcome": "अल क़ुरैशी फ़ूड्स में आपका स्वागत है 🌿\nकृपया एक विकल्प चुनें:",
+        "welcome": "अल क़ुरैशी फ़ूड्स में आपका स्वागत है 🌿\nनीचे के मेनू से एक विकल्प चुनें।",
         "btn": ["📦 उत्पाद", "🕙 कार्य समय", "📞 संपर्क", "📍 लोकेशन", "🌐 भाषा", "ℹ️ हमारे बारे में"],
-        "back": "🔙 मुख्य मेनू",
         "products": "📦 हमारे उत्पाद:\n• मसाले\n• जड़ी-बूटियाँ\n• ड्राई फ्रूट्स और मेवे\n• कॉफ़ी\n• खजूर",
         "hours": "🕙 कार्य समय:\nसुबह 10 बजे से रात 10 बजे तक",
         "contact": "📞 संपर्क:",
@@ -63,9 +73,8 @@ LANGS = {
     },
     "en": {
         "name": "English",
-        "welcome": "Welcome to Al Quraishi Foods 🌿\nChoose a section:",
+        "welcome": "Welcome to Al Quraishi Foods 🌿\nChoose a section from the menu below.",
         "btn": ["📦 Products", "🕙 Working hours", "📞 Contact", "📍 Location", "🌐 Language", "ℹ️ About us"],
-        "back": "🔙 Main menu",
         "products": "📦 Our products:\n• Spices\n• Herbs\n• Premium nuts\n• Coffee\n• Dates",
         "hours": "🕙 Working hours:\n10 AM to 10 PM",
         "contact": "📞 Contact:",
@@ -74,83 +83,98 @@ LANGS = {
     },
 }
 
+# هره دکمه → (ژبه، عمل)
+LABELS = {}
+for _code, _v in LANGS.items():
+    for _action, _label in zip(ACTIONS, _v["btn"]):
+        LABELS[_label] = (_code, _action)
+
+
+def keyboard(code):
+    """د ټيلګرام لاندې دايمي مینو (د ننوتلو ځای ته نږدې)"""
+    b = LANGS[code]["btn"]
+    return ReplyKeyboardMarkup(
+        [[b[0], b[5]], [b[1], b[2]], [b[3], b[4]]],
+        resize_keyboard=True,
+        is_persistent=True,
+    )
+
 
 def lang_menu():
     items = [Btn(v["name"], callback_data=f"lang:{k}") for k, v in LANGS.items()]
     return InlineKeyboardMarkup([items[:3], items[3:]])
 
 
-def main_menu(code):
-    b = LANGS[code]["btn"]
-    return InlineKeyboardMarkup([
-        [Btn(b[0], callback_data="products"), Btn(b[5], callback_data="about")],
-        [Btn(b[1], callback_data="hours"), Btn(b[2], callback_data="contact")],
-        [Btn(b[3], callback_data="location"), Btn(b[4], callback_data="chooselang")],
-    ])
-
-
-def back_menu(code):
-    return InlineKeyboardMarkup([[Btn(LANGS[code]["back"], callback_data="menu")]])
-
-
-def contact_menu(code):
+def contact_links():
     return InlineKeyboardMarkup([
         [Btn("WhatsApp", url=WHATSAPP), Btn("Instagram", url=INSTAGRAM)],
         [Btn("Telegram", url=TELEGRAM), Btn("TikTok", url=TIKTOK)],
-        [Btn(LANGS[code]["back"], callback_data="menu")],
     ])
 
 
-def location_menu(code):
-    return InlineKeyboardMarkup([
-        [Btn(LANGS[code]["btn"][3], url=MAP_LINK)],
-        [Btn(LANGS[code]["back"], callback_data="menu")],
-    ])
+def map_button(code):
+    return InlineKeyboardMarkup([[Btn(LANGS[code]["btn"][3], url=MAP_LINK)]])
 
 
-async def show(q, text, markup):
-    # هماغه پیغام بدلوي، نوی پیغام نه جوړوي
-    try:
-        await q.edit_message_text(text, reply_markup=markup)
-    except BadRequest:
-        pass
-
-
-async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
+async def ask_language(msg):
+    await msg.reply_text(
         "🌐 ژبه وټاکئ / زبان / اللغة / भाषा / Language", reply_markup=lang_menu()
     )
 
 
-async def button(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+async def do_action(msg, code, action):
+    t = LANGS[code]
+    if action == "language":
+        await ask_language(msg)
+    elif action == "contact":
+        await msg.reply_text(f"{t['contact']}\n📱 {PHONE} (WhatsApp)", reply_markup=contact_links())
+        await msg.reply_contact(phone_number=PHONE, first_name="Al Quraishi Foods")
+    elif action == "location":
+        await msg.reply_text(f"{t['location']}\n{MAP_LINK}", reply_markup=map_button(code))
+        if LAT is not None and LON is not None:
+            await msg.reply_location(latitude=LAT, longitude=LON)
+    else:
+        await msg.reply_text(t[action])
+
+
+async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    await ask_language(update.message)
+
+
+async def on_lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     await q.answer()
-    data = q.data
+    code = q.data.split(":")[1]
+    ctx.user_data["lang"] = code
+    await q.message.reply_text(LANGS[code]["welcome"], reply_markup=keyboard(code))
+    try:
+        await q.message.delete()
+    except Exception:
+        pass
 
-    if data == "chooselang":
-        await show(q, "🌐", lang_menu())
-        return
-    if data.startswith("lang:"):
-        ctx.user_data["lang"] = data.split(":")[1]
-        data = "menu"
 
-    code = ctx.user_data.get("lang", "en")
-    t = LANGS[code]
+async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    msg = update.message
+    text = msg.text
+    code = ctx.user_data.get("lang")
+    action = None
 
-    if data == "menu":
-        await show(q, t["welcome"], main_menu(code))
-    elif data == "contact":
-        await show(q, f"{t['contact']}\n📱 {PHONE} (WhatsApp)", contact_menu(code))
-        await q.message.reply_contact(phone_number=PHONE, first_name="Al Quraishi Foods")
-    elif data == "location":
-        await show(q, f"{t['location']}\n{MAP_LINK}", location_menu(code))
-        if LAT is not None and LON is not None:
-            await q.message.reply_location(latitude=LAT, longitude=LON)
-    elif data in ("products", "hours", "about"):
-        await show(q, t[data], back_menu(code))
+    if code and text in LANGS[code]["btn"]:
+        action = ACTIONS[LANGS[code]["btn"].index(text)]
+    elif text in LABELS:
+        code, action = LABELS[text]
+        ctx.user_data["lang"] = code
+
+    if action:
+        await do_action(msg, code, action)
+    elif code:
+        await msg.reply_text(LANGS[code]["welcome"], reply_markup=keyboard(code))
+    else:
+        await ask_language(msg)
 
 
 app = Application.builder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(button))
+app.add_handler(CallbackQueryHandler(on_lang, pattern="^lang:"))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
 app.run_polling()
