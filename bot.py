@@ -28,13 +28,13 @@ LAT = 29.32324
 LON = 47.93314
 
 # د دکمو ترتیب په "btn" لیست کې:
-ACTIONS = ["products", "hours", "contact", "location", "language", "about"]
+ACTIONS = ["products", "hours", "contact", "location", "language", "about", "social"]
 
 LANGS = {
     "ps": {
         "name": "پښتو",
         "welcome": "ښه راغلاست! القريشي فودز ته 🌿\nله لاندې مینو یوه برخه وټاکئ.",
-        "btn": ["📦 محصولات", "🕙 د کار وخت", "📞 اړیکه", "📍 موقعیت", "🌐 ژبه", "ℹ️ زموږ په اړه"],
+        "btn": ["📦 محصولات", "🕙 د کار وخت", "📞 اړیکه", "📍 موقعیت", "🌐 ژبه", "ℹ️ زموږ په اړه", "📲 ټولنیز رسنۍ"],
         "products": "📦 زموږ محصولات:\n• مصالحې\n• بوټي (اعشاب)\n• وچې میوې (مکسرات)\n• قهوه\n• کجورې",
         "hours": "🕙 د کار وخت:\nله ۱۰ سهار تر ۱۰ شپې",
         "contact": "📞 اړیکه:",
@@ -44,7 +44,7 @@ LANGS = {
     "fa": {
         "name": "دری",
         "welcome": "خوش آمدید به القریشی فودز 🌿\nاز منوی پایین یک بخش را انتخاب کنید.",
-        "btn": ["📦 محصولات", "🕙 ساعات کار", "📞 تماس", "📍 موقعیت", "🌐 زبان", "ℹ️ درباره ما"],
+        "btn": ["📦 محصولات", "🕙 ساعات کار", "📞 تماس", "📍 موقعیت", "🌐 زبان", "ℹ️ درباره ما", "📲 شبکه‌های اجتماعی"],
         "products": "📦 محصولات ما:\n• ادویه‌جات\n• گیاهان (اعشاب)\n• میوه‌های خشک و مغزها\n• قهوه\n• خرما",
         "hours": "🕙 ساعات کار:\nاز ساعت ۱۰ صبح تا ۱۰ شب",
         "contact": "📞 تماس:",
@@ -54,7 +54,7 @@ LANGS = {
     "ar": {
         "name": "العربية",
         "welcome": "أهلاً بكم في القريشي فودز 🌿\nاختر قسماً من القائمة بالأسفل.",
-        "btn": ["📦 منتجاتنا", "🕙 مواعيد العمل", "📞 تواصل معنا", "📍 الموقع", "🌐 اللغة", "ℹ️ من نحن"],
+        "btn": ["📦 منتجاتنا", "🕙 مواعيد العمل", "📞 تواصل معنا", "📍 الموقع", "🌐 اللغة", "ℹ️ من نحن", "📲 مواقع التواصل"],
         "products": "📦 منتجاتنا:\n• البهارات\n• الأعشاب\n• المكسرات الفاخرة\n• القهوة\n• التمور",
         "hours": "🕙 مواعيد العمل:\nمن ١٠ صباحاً وحتى ١٠ مساءً",
         "contact": "📞 تواصل معنا:",
@@ -64,7 +64,7 @@ LANGS = {
     "hi": {
         "name": "हिन्दी",
         "welcome": "अल क़ुरैशी फ़ूड्स में आपका स्वागत है 🌿\nनीचे के मेनू से एक विकल्प चुनें।",
-        "btn": ["📦 उत्पाद", "🕙 कार्य समय", "📞 संपर्क", "📍 लोकेशन", "🌐 भाषा", "ℹ️ हमारे बारे में"],
+        "btn": ["📦 उत्पाद", "🕙 कार्य समय", "📞 संपर्क", "📍 लोकेशन", "🌐 भाषा", "ℹ️ हमारे बारे में", "📲 सोशल मीडिया"],
         "products": "📦 हमारे उत्पाद:\n• मसाले\n• जड़ी-बूटियाँ\n• ड्राई फ्रूट्स और मेवे\n• कॉफ़ी\n• खजूर",
         "hours": "🕙 कार्य समय:\nसुबह 10 बजे से रात 10 बजे तक",
         "contact": "📞 संपर्क:",
@@ -74,7 +74,7 @@ LANGS = {
     "en": {
         "name": "English",
         "welcome": "Welcome to Al Quraishi Foods 🌿\nChoose a section from the menu below.",
-        "btn": ["📦 Products", "🕙 Working hours", "📞 Contact", "📍 Location", "🌐 Language", "ℹ️ About us"],
+        "btn": ["📦 Products", "🕙 Working hours", "📞 Contact", "📍 Location", "🌐 Language", "ℹ️ About us", "📲 Social media"],
         "products": "📦 Our products:\n• Spices\n• Herbs\n• Premium nuts\n• Coffee\n• Dates",
         "hours": "🕙 Working hours:\n10 AM to 10 PM",
         "contact": "📞 Contact:",
@@ -94,7 +94,7 @@ def keyboard(code):
     """د ټيلګرام لاندې دايمي مینو (د ننوتلو ځای ته نږدې)"""
     b = LANGS[code]["btn"]
     return ReplyKeyboardMarkup(
-        [[b[0], b[5]], [b[1], b[2]], [b[3], b[4]]],
+        [[b[0], b[5]], [b[1], b[2]], [b[6], b[3]], [b[4]]],
         resize_keyboard=True,
         is_persistent=True,
     )
@@ -106,9 +106,13 @@ def lang_menu():
 
 
 def contact_links():
+    return InlineKeyboardMarkup([[Btn("WhatsApp", url=WHATSAPP)]])
+
+
+def social_links():
     return InlineKeyboardMarkup([
-        [Btn("WhatsApp", url=WHATSAPP), Btn("Instagram", url=INSTAGRAM)],
-        [Btn("Telegram", url=TELEGRAM), Btn("TikTok", url=TIKTOK)],
+        [Btn("Instagram", url=INSTAGRAM), Btn("TikTok", url=TIKTOK)],
+        [Btn("Telegram", url=TELEGRAM)],
     ])
 
 
@@ -129,6 +133,8 @@ async def do_action(msg, code, action):
     elif action == "contact":
         await msg.reply_text(f"{t['contact']}\n📱 {PHONE} (WhatsApp)", reply_markup=contact_links())
         await msg.reply_contact(phone_number=PHONE, first_name="Al Quraishi Foods")
+    elif action == "social":
+        await msg.reply_text(t["btn"][6], reply_markup=social_links())
     elif action == "location":
         await msg.reply_text(f"{t['location']}\n{MAP_LINK}", reply_markup=map_button(code))
         if LAT is not None and LON is not None:
