@@ -3,7 +3,7 @@ import os
 from telegram import InlineKeyboardButton as Btn, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
-TOKEN = os.environ.get("8996342031:AAH2ZbsEIV949H1D32Kh2lAaLSAzzuIw9Qo)
+TOKEN = os.environ.get("BOT_TOKEN", "BOTFATHER_TOKEN_HERE")
 
 # ---- دلته خپل معلومات ولیکئ ----
 PHONE = "+000000000000"
